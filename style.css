@@ -7,7 +7,7 @@ body{
 font-family: magic;
 font-weight: 0;
 background-color: black;
-width: fit-content;
+width: auto;
 }
 
 h1{
