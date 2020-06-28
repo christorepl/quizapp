@@ -57,10 +57,10 @@ function renderResults(){
     </div>`);
   $(".quizForm").html(quizResultsHtml);
   if (STORE.score <= 3){
-    $('.results-img').html(`<img src='/imgs/wrong.jpg' alt="'counterspell' card art, showing a wizard who failed to cast a spell">`);
+    $('.results-img').html(`<img src='imgs/wrong.jpg' alt="'counterspell' card art, showing a wizard who failed to cast a spell">`);
     $('.results-message').text(`Better luck next time! Go play some Magic and brush up on the game, then come back!`);
   } else {
-    $('.results-img').html(`<img src='/imgs/right.jpg' alt="'gallia of the endless dance' card art, showing a satyr celebrating and grabbing another satyr's head">`);
+    $('.results-img').html(`<img src='imgs/right.jpg' alt="'gallia of the endless dance' card art, showing a satyr celebrating and grabbing another satyr's head">`);
     $('.results-message').text(`You nerd! Great job! Wanna join my playgroup?`);
   }
   STORE.currentRender = 0;
