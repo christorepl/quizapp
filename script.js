@@ -34,7 +34,7 @@ function renderChoices() {
 function renderChoicesTemplate(questionChoices, index) {
     return `
   <input type = "radio" id = "choice${index}" name="choices" value= "${questionChoices}" tabindex ="${index}"> 
-  <label for="choice${index}" id = "choice${index}"> ${questionChoices}</label> <p class='form break'></p>
+  <label for="choice${index}"> ${questionChoices}</label> <p class='form break'></p>
   <span id="js-r${index}"></span>
   `;
 }
