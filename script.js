@@ -1,7 +1,6 @@
 `use strict`;
 
 STORE.currentRender = 0;
-STORE.score = 0;
 
 function startButton (){
   $('.start').on('click', e => {
@@ -11,65 +10,113 @@ function startButton (){
 }
 
 function renderQuizData(){
-  const dataHtml = $(`
-  <li class='quiz-data'>Score: ${STORE.score}/${STORE.questions.length}</li>
-  <li class='question-count'>Quiz Progress: ${STORE.currentRender + 1}/${STORE.questions.length}</li>
-  `);
-  $(".score-data").html(dataHtml);
+var htmlText = scoreHtmlTemplate(STORE.score, STORE.questions.length, STORE.currentRender);
+$(".score-data").html(htmlText);
+}
+
+function scoreHtmlTemplate(score, questionsLength, currentRender){
+return `
+ <li class='quiz-data'>Score: ${score}/${questionsLength}</li>
+ <li class='question-count'>Quiz Progress: ${currentRender + 1}/${questionsLength}</li>
+ `
 }
 
 function renderChoices() {
   let question = STORE.questions[STORE.currentRender];
   for(let i=0; i < question.choices.length; i++)
-  {
-    $('.choice-field').append(`
-        <input type = "radio" name="choices" value= "${question.choices[i]}" tabindex ="${i+1}"> 
-        <label for="choice${i+1}"> ${question.choices[i]}</label> <p class='form break'></p>
-        <span id="js-r${i+1}"></span>
-    `);
+  { let questionChoicesLoop = question.choices[i]
+    let choicesIndex = i+1
+    let choicesHtml = renderChoicesTemplate (questionChoicesLoop, choicesIndex)
+    $('.choice-field').append(choicesHtml);
   }
-  $('.form-break').html(`<form></form>`);
+}
+
+function renderChoicesTemplate (questionChoices, index){
+return `
+  <input type = "radio" id = "choice${index}" name="choices" value= "${questionChoices}" tabindex ="${index}"> 
+  <label for="choice${index}" id = "choice${index}"> ${questionChoices}</label> <p class='form break'></p>
+  <span id="js-r${index}"></span>
+  `
 }
 
 function renderQuestions () {
-  let question = STORE.questions[STORE.currentRender];
+  let questionIndex = STORE.questions[STORE.currentRender];
   renderQuizData();
-  let questionFormHtml = (`
-  <legend>${question.question}</legend>
-  <p class='choice-field'></p>
-  <p class='right-or-wrong'></p>
-  <button type = "submit" id="submission">That's my final answer!</button>
-  <button type = "button" id="next-question">On to the next question!</button>
-  `);
+  let questionFormHtml = questionsHtmlTemplate(questionIndex);
   $('.quizForm').html(questionFormHtml);
   renderChoices();
   $('#next-question').hide();
 }
 
-function renderResults(){
-  $('.question-count').hide();
-    let quizResultsHtml = $(
-    `<div class="results">
+function questionsHtmlTemplate (question){
+  return `<legend>${question.question}</legend>
+  <p class='choice-field'></p>
+  <p class='right-or-wrong'></p>
+  <button type = "submit" id="submission">That's my final answer!</button>
+  <button type = "button" id="next-question">Next!</button>
+  `
+}
+
+function renderResultsHtml (){
+ return `<div class="results">
 	    <div class='results-img'></div>
 	      <legend class='results-score'>Your Score is: ${STORE.score}/${STORE.questions.length}</legend>
       	<p class='results-message'></p>
-	    <button type="button" id="restart-quiz">Restart Quiz</button>
-    </div>`);
-  $(".quizForm").html(quizResultsHtml);
+	    <button type="button" id="restart-quiz" label="restart-quiz">Restart Quiz</button>
+    </div>
+    `
+}
+
+function renderResults(){
+  let resultsHtml = renderResultsHtml();
+  $(".quizForm").html(resultsHtml);
+}
+
+function deteremineResultsImg() {
   if (STORE.score <= 3){
-    $('.results-img').html(`<img src='imgs/wrong.jpg' alt="'counterspell' card art, showing a wizard who failed to cast a spell">`);
-    $('.results-message').text(`Better luck next time! Go play some Magic and brush up on the game, then come back!`);
+    renderFailureHtml() || renderFailureMsg()
   } else {
-    $('.results-img').html(`<img src='imgs/right.jpg' alt="'gallia of the endless dance' card art, showing a satyr celebrating and grabbing another satyr's head">`);
-    $('.results-message').text(`You nerd! Great job! Wanna join my playgroup?`);
+    renderCongratsHtml() || renderCongratsMsg()
   }
+};
+
+function renderFailureHtml (){
+  let renderedFailure = renderFailure();
+  $('.results-img').html(renderedFailureTemplate)
+}
+
+function renderFailureTemplate (){
+  return `<img src='imgs/wrong.jpg' alt="'counterspell' card art, showing a wizard who failed to cast a spell">
+  `
+}
+
+function renderFailureMsg (){
+ $('.results-message').text(`Better luck next time! Go play some Magic and brush up on the game, then come back!`);
+}
+
+function renderCongratsHtml (){
+  let congratsHtml = renderCongratsTemplate();
+  $('.results-img').html(congratsHtml);
+}
+
+function renderCongratsTemplate () {
+  return `<img src='imgs/right.jpg' alt="'gallia of the endless dance' card art, showing a satyr celebrating and grabbing another satyr's head">
+  `
+}
+
+function renderCongratsMsg (){
+  $('.results-message').text(`You nerd! Great job! Wanna join my playgroup?`);
+}
+
+function restartQuizData (){
+   $('.question-count').hide();
   STORE.currentRender = 0;
   STORE.score = 0;
 }
 
 function determineRenderResultsOrRenderQuestion (){
   $('form').on('click','#next-question', e => {
-    STORE.currentRender === STORE.questions.length?renderResults() : renderQuestions();
+    STORE.currentRender === STORE.questions.length?renderResults() || deteremineResultsImg() || restartQuizData () : renderQuestions();
   });
   //this will bring the user to the next question OR the quizResults screen if there are no more questions to be answered in the quiz
   //if else statement will be used
@@ -87,11 +134,12 @@ function checkAnswers (){
     }
    if (response === currentQ.answer){
      STORE.score++;
-     $('.right-or-wrong').html(`Correct! Good job planeswalker!`);
+     let correct = correctAnswerTemplate(); 
+      $('.right-or-wrong').html(correct);
    }else {
-     $('.right-or-wrong').html(`Wrong! <br> The correct answer is "${currentQ.answer}"`);
+     let wrong = wrongAnswerTemplate(currentQ.answer);
+     $('.right-or-wrong').html(wrong);
    }
-
     STORE.currentRender++;
     $(".quiz-data").text(`Score: ${STORE.score}/${STORE.questions.length}`);
     $('#submission').hide();
@@ -100,6 +148,17 @@ function checkAnswers (){
    });
   }
   //this will display a message telling the user whether they got the question right or wrong, and if it is wrong, it will tell them the right answer
+
+function correctAnswerTemplate (){
+  return `Correct! Good job planeswalker!
+  `
+}
+
+function wrongAnswerTemplate (answer){
+  return `Wrong! <br> The correct answer is "${answer}"
+  `
+}
+
 function restartButton(){
   $('fieldset').on('click','#restart-quiz', (event) => {
    $('.question-count').hide();
